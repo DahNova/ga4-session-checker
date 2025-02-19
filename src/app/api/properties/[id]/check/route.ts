@@ -14,20 +14,12 @@ export async function POST(
 ) {
   try {
     const cookieStore = cookies()
-    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore })
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    
     const { id } = await context.params
     
-    // Get property with user settings
     const property = await prisma.property.findFirst({
       where: {
         id,
-        userId: user.id,
       },
       include: {
         user: {
@@ -42,15 +34,18 @@ export async function POST(
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
+    if (!property.user.settings) {
+      return NextResponse.json({ error: 'User settings not found' }, { status: 404 })
+    }
+
     // Get delay from settings or use default
-    const checkDelaySeconds = property.user.settings?.checkDelaySeconds || 2;
+    const checkDelaySeconds = property.user.settings.checkDelaySeconds ?? 2;
 
     try {
-      // Wait for the configured delay
       await delay(checkDelaySeconds);
       
       const checkResult = await checkForAnomalies(property.propertyId)
-      const check = await prisma.check.create({
+      await prisma.check.create({
         data: {
           propertyId: property.id,
           sessions: checkResult.sessions,

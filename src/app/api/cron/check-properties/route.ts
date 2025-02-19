@@ -68,6 +68,19 @@ interface UserSettings {
   smtpFromName?: string;
   smtpFromEmail?: string;
   telegramChatId?: string;
+  // Add missing fields that were causing errors
+  timeZone: string;
+  checkTime: string;
+  checkFrequency: 'hourly' | 'daily' | 'custom';
+  customCron?: string;
+  anomalyThreshold: number;
+  minSessions: number;
+  warningSeverity: number;
+  criticalSeverity: number;
+  compareWithDays: number;
+  defaultPageSize: number;
+  defaultSortField: string;
+  defaultSortOrder: string;
 }
 
 interface UserProperty {
@@ -88,12 +101,11 @@ interface UserPropertiesGroup {
 
 // Group anomalies by account for better readability
 async function formatAnomalies(anomalies: PropertyCheck[]): Promise<string> {
-  // Group by account
   const byAccount = anomalies.reduce((acc, {property, checkResult, accountName}) => {
     if (!acc[accountName]) {
       acc[accountName] = [];
     }
-    acc[accountName].push({property, checkResult});
+    acc[accountName].push({property, checkResult, accountName});
     return acc;
   }, {} as Record<string, PropertyCheck[]>);
 
@@ -179,8 +191,14 @@ export async function POST() {
   try {
     console.log('Starting scheduled property checks...');
     
-    // Get all properties with their user settings
     const properties = await prisma.property.findMany({
+      where: {
+        user: {
+          settings: {
+            isNot: null
+          }
+        }
+      },
       include: {
         user: {
           include: {
@@ -190,16 +208,17 @@ export async function POST() {
       }
     });
 
-    // Group properties by user to respect individual settings
     const propertiesByUser = properties.reduce((acc, property) => {
+      if (!property.user.settings) return acc;
+      
       const userId = property.user.id;
       if (!acc[userId]) {
         acc[userId] = {
-          settings: property.user.settings,
+          settings: property.user.settings as UserSettings,
           properties: []
         };
       }
-      acc[userId].properties.push(property);
+      acc[userId].properties.push(property as UserProperty);
       return acc;
     }, {} as Record<string, UserPropertiesGroup>);
 
