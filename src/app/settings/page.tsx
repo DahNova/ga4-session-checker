@@ -92,6 +92,10 @@ export default function SettingsPage() {
     }
   }, [user, loading, router])
 
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings', {

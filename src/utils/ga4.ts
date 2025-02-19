@@ -115,15 +115,19 @@ export async function checkForAnomalies(propertyId: string) {
   }
 }
 
-export async function getAccountName(accountId: string) {
+export async function getAccountName(propertyId: string): Promise<string> {
   try {
-    const response = await analyticsAdmin.accounts.get({
-      name: `accounts/${accountId}`
-    });
+    const accountId = propertyId.split('-')[0];
+    const response = await fetch(`/api/ga4/accounts/${accountId}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch account name');
+    }
 
-    return response.data.displayName || accountId;
+    const data = await response.json();
+    return data.name;
   } catch (error) {
     console.error('Error fetching account name:', error);
-    return accountId; // Return the ID if we can't get the name
+    return 'Unknown Account';
   }
 } 

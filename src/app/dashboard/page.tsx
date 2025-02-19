@@ -96,6 +96,10 @@ export default function DashboardPage() {
     }, Promise.resolve())
   }, [properties])
 
+  useEffect(() => {
+    fetchAccountName();
+  }, [fetchAccountName]);
+
   const handleAddProperty = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget

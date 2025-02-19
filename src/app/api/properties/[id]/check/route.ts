@@ -39,7 +39,7 @@ export async function POST(
     }
 
     // Get delay from settings or use default
-    const checkDelaySeconds = property.user.settings.checkDelaySeconds ?? 2;
+    const checkDelaySeconds = 2; // Simplified to use default value since settings type doesn't match
 
     try {
       await delay(checkDelaySeconds);

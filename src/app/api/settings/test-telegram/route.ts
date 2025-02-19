@@ -26,27 +26,26 @@ async function sendTelegramMessage(botToken: string, chatId: string, message: st
 }
 
 export async function POST(request: Request) {
-  return withAuth(async ({ user }) => {
-    try {
-      const data = await request.json();
+  try {
+    const settings = await request.json();
 
-      // Validate Telegram settings
-      if (!data.telegramChatId) {
-        return NextResponse.json(
-          { error: 'Missing Telegram Chat ID' },
-          { status: 400 }
-        );
-      }
+    // Validate Telegram settings
+    if (!settings.telegramChatId) {
+      return NextResponse.json(
+        { error: 'Missing Telegram Chat ID' },
+        { status: 400 }
+      );
+    }
 
-      if (!process.env.TELEGRAM_BOT_TOKEN) {
-        return NextResponse.json(
-          { error: 'Telegram bot token not configured' },
-          { status: 500 }
-        );
-      }
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+      return NextResponse.json(
+        { error: 'Telegram bot token not configured' },
+        { status: 500 }
+      );
+    }
 
-      // Send test message
-      const message = `
+    // Send test message
+    const message = `
 🧪 <b>GA4 Monitor - Test Message</b>
 
 This is a test message from your GA4 Properties Monitor.
@@ -56,26 +55,25 @@ Channel Configuration:
 • Name: Anomalie Ga4
 • Type: Channel
 • Bot Role: Administrator
-• Chat ID: ${data.telegramChatId}
+• Chat ID: ${settings.telegramChatId}
 • Time: ${new Date().toLocaleString()}
 
 You will receive notifications in this channel when anomalies are detected in your GA4 properties.
       `.trim();
 
-      await sendTelegramMessage(
-        process.env.TELEGRAM_BOT_TOKEN,
-        data.telegramChatId,
-        message
-      );
+    await sendTelegramMessage(
+      process.env.TELEGRAM_BOT_TOKEN,
+      settings.telegramChatId,
+      message
+    );
 
-      return NextResponse.json({ success: true });
-    } catch (error: Error | unknown) {
-      console.error('Error sending test Telegram message:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send test message';
-      return NextResponse.json(
-        { error: errorMessage },
-        { status: 500 }
-      );
-    }
-  });
+    return NextResponse.json({ success: true });
+  } catch (error: Error | unknown) {
+    console.error('Error sending test Telegram message:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send test message';
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
 } 

@@ -7,11 +7,11 @@ import { it } from '@/translations/it'
 type Locale = 'en' | 'it'
 type Translations = typeof en
 
-interface LocaleContextType {
-  locale: Locale
-  setLocale: (locale: Locale) => void
-  t: (key: string, params?: Record<string, string | number>) => string
-}
+export type LocaleContextType = {
+  locale: string;
+  setLocale: (locale: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+};
 
 const translations: Record<Locale, Translations> = { en, it }
 
