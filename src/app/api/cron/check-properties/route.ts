@@ -70,6 +70,22 @@ interface UserSettings {
   telegramChatId?: string;
 }
 
+interface UserProperty {
+  id: string;
+  name: string;
+  propertyId: string;
+  accountId: string;
+  user: {
+    id: string;
+    settings: UserSettings;
+  };
+}
+
+interface UserPropertiesGroup {
+  settings: UserSettings;
+  properties: UserProperty[];
+}
+
 // Group anomalies by account for better readability
 async function formatAnomalies(anomalies: PropertyCheck[]): Promise<string> {
   // Group by account
@@ -185,7 +201,7 @@ export async function POST() {
       }
       acc[userId].properties.push(property);
       return acc;
-    }, {} as Record<string, { settings: any, properties: typeof properties }>);
+    }, {} as Record<string, UserPropertiesGroup>);
 
     console.log(`Processing properties for ${Object.keys(propertiesByUser).length} users`);
 
