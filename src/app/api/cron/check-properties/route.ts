@@ -42,18 +42,36 @@ function formatDate(date: Date): string {
   });
 }
 
-// Utility function to format percentage change
-function formatPercentage(current: number, previous: number): string {
-  const percentage = ((current - previous) / previous) * 100;
-  return percentage.toFixed(1);
+interface PropertyCheck {
+  property: {
+    id: string;
+    name: string;
+    propertyId: string;
+    accountId: string;
+  };
+  checkResult: {
+    sessions: number;
+    hasAnomaly: boolean;
+    message?: string;
+  };
+  accountName: string;
+}
+
+interface UserSettings {
+  checkDelaySeconds: number;
+  emailNotifications: boolean;
+  emailAddresses: string[];
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUser?: string;
+  smtpPassword?: string;
+  smtpFromName?: string;
+  smtpFromEmail?: string;
+  telegramChatId?: string;
 }
 
 // Group anomalies by account for better readability
-async function formatAnomalies(anomalies: Array<{
-  property: any,
-  checkResult: any,
-  accountName: string
-}>): Promise<string> {
+async function formatAnomalies(anomalies: PropertyCheck[]): Promise<string> {
   // Group by account
   const byAccount = anomalies.reduce((acc, {property, checkResult, accountName}) => {
     if (!acc[accountName]) {
@@ -61,7 +79,7 @@ async function formatAnomalies(anomalies: Array<{
     }
     acc[accountName].push({property, checkResult});
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, PropertyCheck[]>);
 
   // Build message
   let message = `🚨 Rilevate Anomalie GA4\n`;
@@ -84,9 +102,9 @@ async function formatAnomalies(anomalies: Array<{
 // Process a single user's properties
 async function processUserProperties(
   userId: string, 
-  properties: any[], 
-  settings: any
-): Promise<Array<{ property: any; checkResult: any; accountName: string }>> {
+  properties: PropertyCheck['property'][], 
+  settings: UserSettings
+): Promise<PropertyCheck[]> {
   const anomalies = [];
   const errors = [];
 
@@ -141,7 +159,7 @@ async function processUserProperties(
   return anomalies;
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     console.log('Starting scheduled property checks...');
     
