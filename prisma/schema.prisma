@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  properties Property[]
+  settings   Settings?
+}
+
+model Property {
+  id          String     @id @default(cuid())
+  name        String
+  propertyId  String
+  accountId   String
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  lastChecked DateTime?
+  status      String     @default("pending")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  checks      Check[]
+
+  @@unique([propertyId, accountId])
+}
+
+model Check {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  sessions   Int
+  timestamp  DateTime @default(now())
+  status     String
+  error      String?
+}
+
+model Settings {
+  id                String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  
+  // Anomaly Detection
+  anomalyThreshold Float    @default(0.5)
+  minSessions      Int      @default(100)
+  warningSeverity  Float    @default(0.3)
+  criticalSeverity Float    @default(0.5)
+  compareWithDays  Int      @default(7)
+  
+  // Schedule
+  checkFrequency   String   @default("daily")
+  customCron       String?
+  checkTime        String   @default("00:00")
+  timeZone         String   @default("UTC")
+  checkDelaySeconds Int     @default(2)  // Delay between property checks to avoid GA4 API rate limits
+  
+  // Notifications
+  emailNotifications Boolean  @default(true)
+  emailAddresses    String[] @default([])
+  slackWebhook      String?
+  telegramChatId    String?
+  
+  // SMTP Settings
+  smtpHost         String?
+  smtpPort         Int?
+  smtpUser         String?
+  smtpPassword     String?
+  smtpFromEmail    String?
+  smtpFromName     String?
+  
+  // Dashboard Preferences
+  defaultPageSize  Int      @default(25)
+  defaultSortField String   @default("name")
+  defaultSortOrder String   @default("asc")
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+} 
